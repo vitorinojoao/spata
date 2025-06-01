@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use spata, please cite it."
+type: software
+license: MIT
+title: "spata"
+authors:
+  - family-names: "Vitorino"
+    given-names: "João"
+    orcid: "https://orcid.org/0000-0002-4968-3653"
+url: "https://github.com/vitorinojoao/spata"
