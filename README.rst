@@ -1,7 +1,7 @@
-spata
+SPATA
 =====
 
-It is currently under development.
+This is SPATA.
 
 Check out the official documentation: `https://spata.readthedocs.io/en/latest <https://spata.readthedocs.io/en/latest/>`_
 

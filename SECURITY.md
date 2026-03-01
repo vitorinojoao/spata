@@ -2,14 +2,14 @@
 
 ## Finding an Issue
 
-If spata is not working as expected in your use case, please check the API Reference in the official documentation.  
+If SPATA is not working as expected in your use case, please check the API Reference in the official documentation.  
 If the official documentation does not describe such possibility, there may be an issue in the source code.  
 
 When an issue has a security impact in regular use cases that should be stable, it is important to report it.  
 
 ## Reporting an Issue
 
-Please report possible issues by email to: [jpmvo@outlook.com](mailto:jpmvo@outlook.com?subject=[spata]%20Security%20Issue)  
+Please report possible issues by email to: [jpmvo@outlook.com](mailto:jpmvo@outlook.com?subject=[SPATA]%20Security%20Issue)  
 The report should include the following information:
 
 1. A short description of the issue.

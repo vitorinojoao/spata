@@ -1,6 +1,6 @@
 [project]
 name = "spata"
-description = "spata"
+description = "SPATA"
 dynamic = [ "version" ]
 license = { file = "LICENSE.txt" }
 readme = { file = "README.rst", content-type = "text/x-rst" }

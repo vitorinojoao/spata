@@ -1,8 +1,8 @@
 cff-version: 1.2.0
-message: "If you use spata, please cite it."
+message: "If you use SPATA, please cite it."
 type: software
 license: MIT
-title: "spata"
+title: "SPATA"
 authors:
   - family-names: "Vitorino"
     given-names: "João"
