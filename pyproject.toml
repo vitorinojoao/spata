@@ -2,11 +2,12 @@
 name = "spata"
 description = "SPATA"
 dynamic = [ "version" ]
-license = { file = "LICENSE.txt" }
-readme = { file = "README.rst", content-type = "text/x-rst" }
 authors = [
     { name = "João Vitorino", email = "jpmvo@outlook.com" },
 ]
+license = "MIT"
+license-files = [ "LICENSE.txt" ]
+readme = { file = "README.rst", content-type = "text/x-rst" }
 classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
@@ -23,6 +24,10 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [ "numpy>=2.0.2,<3" ]
+
+[project.optional-dependencies]
+plots = [ "matplotlib>=3.7.5,<4" ]
+jobs = ["joblib>=1.4.2,<2" ]
 
 [project.urls]
 "Homepage" = "https://github.com/vitorinojoao/spata"
