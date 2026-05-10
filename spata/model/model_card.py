@@ -1,7 +1,7 @@
 """spata.model.model_card"""
 
+import json
 import numpy as np
-
 from spata.base.card import Card
 
 

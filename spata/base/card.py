@@ -13,21 +13,8 @@ class Card:
     CONFIG_I_NAME_DEFAULT = "Card"
     CONFIG_I_NAME_LENGTH = 100
 
-    CONFIG_F_NAME_DEFAULT = "Feature"
+    CONFIG_F_NAME_DEFAULT = "F"
     CONFIG_F_NAME_LENGTH = 20
-
-    CONFIG_PLT_AXIS_LIMITS = (0.01, 1.05)
-    CONFIG_PLT_TICK_VALUES = (0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
-    CONFIG_PLT_TICK_LABELS = (
-        "\u03bc-3.5\u03c3",
-        "\u03bc-2.5\u03c3",
-        "\u03bc-1.5\u03c3",
-        "\u03bc-0.5\u03c3",
-        "\u03bc0.5\u03c3",
-        "\u03bc1.5\u03c3",
-        "\u03bc2.5\u03c3",
-        "\u03bc3.5\u03c3",
-    )
 
     KEY_I_TIMESTAMP = "timestamp"
     KEY_I_INIT = "init"
@@ -138,7 +125,7 @@ class Card:
                 name = str(name)
             except Exception as e:
                 raise TypeError(
-                    "The 'name' parameter must be a short name for this Card"
+                    "The 'name' argument must be a short name for this Card"
                 ) from e
 
         if fnames is not None:
@@ -146,7 +133,7 @@ class Card:
                 fnames = [str(item) for item in fnames]
             except Exception as e:
                 raise TypeError(
-                    "The 'fnames' parameter must be an array-like of feature names"
+                    "The 'fnames' argument must be an array-like of feature names"
                 ) from e
 
         if fdtypes is not None:
@@ -154,13 +141,13 @@ class Card:
                 fdtypes = [np.dtype(item) for item in fdtypes]
             except Exception as e:
                 raise TypeError(
-                    "The 'fnames' parameter must be an array-like of feature names"
+                    "The 'fnames' argument must be an array-like of feature names"
                 ) from e
 
             if fnames is not None and len(fdtypes) != len(fnames):
                 raise TypeError(
-                    "The 'fdtypes' parameter must be an array-like of feature dtypes"
-                    + "  in the (n_features, ) shape, where n_features matches the 'fnames' parameter"
+                    "The 'fdtypes' argument must be an array-like of numpy dtypes"
+                    + "  in the (n_features, ) shape, where n_features matches the 'fnames' argument"
                 )
 
         if inverses is None:
@@ -170,7 +157,7 @@ class Card:
             try:
                 keep_inverses = bool(inverses)
             except Exception as e:
-                raise TypeError("The 'inverses' parameter must be a boolean") from e
+                raise TypeError("The 'inverses' argument must be a boolean") from e
 
         try:
             self.random_state = np.random.default_rng(random_state)
@@ -198,20 +185,16 @@ class Card:
         if isinstance(X, Card):
             self.info[self.KEY_I_INIT] = self.VAL_I_INIT_BYCLONE
 
-            try:
-                self.__init_from_dict(
-                    X.info,
-                    X.features,
-                    X.projections,
-                    X.regions,
-                    granularity,
-                    name,
-                    fnames,
-                    fdtypes,
-                )
-                # X.inverses if hasattr(X, "inverses") else None,
-            except Exception as e:
-                raise ValueError("Error while cloning a Card") from e
+            self.__init_from_dict(
+                X.info,
+                X.features,
+                X.projections,
+                X.regions,
+                granularity,
+                name,
+                fnames,
+                fdtypes,
+            )
 
         elif isinstance(X, dict):
             self.info[self.KEY_I_INIT] = self.VAL_I_INIT_BYDICT
@@ -228,35 +211,28 @@ class Card:
                 for r, rdict in X["regions"].items()
             }
 
-            try:
-                self.__init_from_dict(
-                    X["info"],
-                    X["features"],
-                    X["projections"],
-                    X["regions"],
-                    granularity,
-                    name,
-                    fnames,
-                    fdtypes,
-                )
-                # X["inverses"] if "inverses" in X else None,
-            except Exception as e:
-                raise ValueError("Error while loading a Card from a dict") from e
+            self.__init_from_dict(
+                X["info"],
+                X["features"],
+                X["projections"],
+                X["regions"],
+                granularity,
+                name,
+                fnames,
+                fdtypes,
+            )
 
         else:
             self.info[self.KEY_I_INIT] = self.VAL_I_INIT_BYX
 
-            try:
-                self.__init_from_input(
-                    X,
-                    granularity,
-                    name,
-                    fnames,
-                    fdtypes,
-                    keep_inverses,
-                )
-            except Exception as e:
-                raise ValueError("Error while creating a Card from input") from e
+            self.__init_from_input(
+                X,
+                granularity,
+                name,
+                fnames,
+                fdtypes,
+                keep_inverses,
+            )
 
         # ------------------------------
 
@@ -345,7 +321,7 @@ class Card:
 
             except Exception as e:
                 raise ValueError(
-                    "This Card could not be saved to the 'filepath' parameter"
+                    "This Card could not be saved to the 'filepath' argument"
                 ) from e
 
         return res
@@ -361,31 +337,31 @@ class Card:
         try:
             out_by_feature = bool(out_by_feature)
         except Exception as e:
-            raise TypeError("The 'out_by_feature' parameter must be a boolean") from e
+            raise TypeError("The 'out_by_feature' argument must be a boolean") from e
 
         try:
             out_by_tuple = bool(out_by_tuple)
         except Exception as e:
-            raise TypeError("The 'out_by_tuple' parameter must be a boolean") from e
+            raise TypeError("The 'out_by_tuple' argument must be a boolean") from e
 
         if out_by_feature and out_by_tuple:
             raise ValueError(
-                "The 'out_normalized' and 'out_standardized' parameters cannot be used at the same time"
+                "The 'out_normalized' and 'out_standardized' arguments cannot be True at the same time"
             )
 
         try:
             out_normalized = bool(out_normalized)
         except Exception as e:
-            raise TypeError("The 'out_normalized' parameter must be a boolean") from e
+            raise TypeError("The 'out_normalized' argument must be a boolean") from e
 
         try:
             out_standardized = bool(out_standardized)
         except Exception as e:
-            raise TypeError("The 'out_standardized' parameter must be a boolean") from e
+            raise TypeError("The 'out_standardized' argument must be a boolean") from e
 
         if out_normalized and out_standardized:
             raise ValueError(
-                "The 'out_normalized' and 'out_standardized' parameters cannot be used at the same time"
+                "The 'out_normalized' and 'out_standardized' arguments cannot be True at the same time"
             )
 
         Xbycols, nrows, ncols = self.__prepare_input(X)
@@ -414,7 +390,7 @@ class Card:
                     )
                 except Exception as e:
                     raise ValueError(
-                        f"The 'X' parameter contains numpy dtypes incompatible with this Card in feature {j}"
+                        f"The 'X' argument contains an incompatible numpy dtype in feature {j}"
                     ) from e
 
             if out_by_feature or out_by_tuple:
@@ -579,14 +555,16 @@ class Card:
                     )
                     new_nrows = farray.shape[0]
                 except Exception:
-                    raise TypeError("The 'X' parameter provides invalid data")
+                    raise TypeError(
+                        f"The 'X' argument contains invalid data in feature {j}"
+                    )
 
                 if nrows is None:
                     nrows = new_nrows
 
                 elif new_nrows != nrows:
                     raise ValueError(
-                        "The 'X' parameter must always provide the same number of rows for every column"
+                        "The 'X' argument must always provide the same number of rows for every column"
                     )
 
                 Xbycols.append(farray)
@@ -609,13 +587,13 @@ class Card:
         ## Validate size of X
         if nrows == 0:
             raise TypeError(
-                "The 'X' parameter must be a 2D array-like in the (n_rows, n_columns) shape,"
+                "The 'X' argument must be a 2D array-like in the (n_rows, n_columns) shape,"
                 + " where n_rows is at least 1"
             )
 
         if ncols == 0:
             raise TypeError(
-                "The 'X' parameter must be a 2D array-like in the (n_rows, n_columns) shape,"
+                "The 'X' argument must be a 2D array-like in the (n_rows, n_columns) shape,"
                 + " where n_columns is at least 1"
             )
 
@@ -655,7 +633,7 @@ class Card:
         else:
             if len(fnames) != len(X_features):
                 raise ValueError(
-                    "The 'fnames' parameter must be an array-like"
+                    "The 'fnames' argument must be an array-like"
                     + " of feature names in the (n_features, ) shape,"
                     + " where n_features matches the provided Card"
                 )
@@ -676,7 +654,7 @@ class Card:
         else:
             if len(fdtypes) != len(X_features):
                 raise ValueError(
-                    "The 'fdtypes' parameter must be an array-like of feature dtypes"
+                    "The 'fdtypes' argument must be an array-like of numpy dtypes"
                     + "  in the (n_features, ) shape, where n_features matches the provided Card"
                 )
 
@@ -693,7 +671,7 @@ class Card:
 
                 else:
                     raise ValueError(
-                        "The 'fdtypes' parameter contains invalid numpy dtypes for a Card"
+                        "The 'fdtypes' argument contains invalid numpy dtypes for a Card"
                     )
 
                 self.features[j][self.KEY_F_DTYPE] = item.name
@@ -810,7 +788,7 @@ class Card:
             # With default feature name
             self.features = {
                 j: {
-                    self.KEY_F_NAME: f"{self.CONFIG_F_NAME_DEFAULT} {str(j)}"[
+                    self.KEY_F_NAME: f"{self.CONFIG_F_NAME_DEFAULT}{str(j)}"[
                         : self.CONFIG_F_NAME_LENGTH
                     ]
                 }
@@ -821,9 +799,9 @@ class Card:
             # With provided feature names
             if len(fnames) != ncols:
                 raise ValueError(
-                    "The 'fnames' parameter must be an array-like"
+                    "The 'fnames' argument must be an array-like"
                     + " of feature names in the (n_features, ) shape,"
-                    + " where n_features matches the 'X' parameter"
+                    + " where n_features matches the 'X' argument"
                 )
 
             self.features = {
@@ -856,7 +834,7 @@ class Card:
 
                 else:
                     raise ValueError(
-                        "The 'X' parameter contains invalid data for a Card"
+                        f"The 'X' argument contains an invalid numpy dtype in feature {j}"
                     )
 
                 min_dtype = np.min_scalar_type(Xbycols[j])
@@ -873,8 +851,8 @@ class Card:
             # With provided numpy dtypes
             if len(fdtypes) != ncols:
                 raise ValueError(
-                    "The 'fdtypes' parameter must be an array-like of feature dtypes"
-                    + "  in the (n_features, ) shape, where n_features matches the 'X' parameter"
+                    "The 'fdtypes' argument must be an array-like of numpy dtypes"
+                    + "  in the (n_features, ) shape, where n_features matches the 'X' argument"
                 )
 
             for j, item in enumerate(fdtypes):
@@ -888,7 +866,7 @@ class Card:
 
                 else:
                     raise ValueError(
-                        "The 'fdtypes' parameter contains invalid numpy dtypes for a Card"
+                        "The 'fdtypes' argument contains invalid numpy dtypes for a Card"
                     )
 
                 item = np.dtype(item)
@@ -897,10 +875,10 @@ class Card:
                     # Provided dtype was different from X
                     try:
                         Xbycols[j] = Xbycols[j].astype(item)
-                    except Exception:
+                    except Exception as e:
                         raise ValueError(
-                            "The 'fdtypes' parameter contains numpy dtypes incompatible with the data of the 'X' parameter"
-                        )
+                            "The 'fdtypes' argument contains numpy dtypes incompatible with the data of the 'X' argument"
+                        ) from e
 
                 self.features[j][self.KEY_F_DTYPE] = item.name
                 self.features[j][self.KEY_F_INIT] = self.VAL_F_INIT_CONFIGURED
@@ -1514,19 +1492,17 @@ class Card:
                 features = [int(item) for item in features]
             except Exception as e:
                 raise TypeError(
-                    "The 'features' parameter must be an array-like of feature indexes"
+                    "The 'features' argument must be an array-like of feature indexes"
                 ) from e
 
             if len(features) == 0:
-                raise ValueError(
-                    "The 'features' parameter contains must not be empty"
-                ) from e
+                raise ValueError("The 'features' argument contains must not be empty")
 
             for j in features:
                 if j not in self.features:
                     raise ValueError(
-                        "The 'features' parameter contains invalid feature indexes"
-                    ) from e
+                        "The 'features' argument contains invalid feature indexes"
+                    )
 
             miniregions = {}
 
@@ -1561,26 +1537,12 @@ class Card:
                     else:
                         minilines[minitup] = val
 
-            try:
-                fig = plotter(
-                    lines=[
-                        [[item / self._scaling for item in tup] for tup in minilines]
-                    ],
-                    alphas=[
-                        [item * alpha_scaling + 0.2 for item in minilines.values()]
-                    ],
-                    vertice_labels=[
-                        self.features[j][self.KEY_F_NAME] for j in features
-                    ],
-                    button_labels=None,
-                    button_colors=None,
-                    tick_labels=self.CONFIG_PLT_TICK_LABELS,
-                    tick_values=self.CONFIG_PLT_TICK_VALUES,
-                    axis_limits=self.CONFIG_PLT_AXIS_LIMITS,
-                    verify=False,
-                )
-            except Exception as e:
-                raise ValueError("The call to the 'plotter' argument failed") from e
+            fig = plotter(
+                lines=[[[item / self._scaling for item in tup] for tup in minilines]],
+                alphas=[[item * alpha_scaling + 0.2 for item in minilines.values()]],
+                vertice_labels=[self.features[j][self.KEY_F_NAME] for j in features],
+                verify=False,
+            )
 
             return miniregions, fig
 

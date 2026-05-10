@@ -10,7 +10,7 @@ class DataCard(Card):
 
     CONFIG_Y_INFERRED_GRANULARITY_DEFAULT = 1
 
-    CONFIG_C_NAME_DEFAULT = "Class"
+    CONFIG_C_NAME_DEFAULT = "C"
     CONFIG_C_NAME_LENGTH = 20
 
     KEY_I_COUNT_C = "n_classes"
@@ -47,7 +47,7 @@ class DataCard(Card):
                 cnames = [str(item) for item in cnames]
             except Exception as e:
                 raise TypeError(
-                    "The 'cnames' parameter must be an array-like of feature names"
+                    "The 'cnames' argument must be an array-like of feature names"
                 ) from e
 
         if classification is None:
@@ -58,7 +58,7 @@ class DataCard(Card):
                 is_classification = bool(classification)
             except Exception as e:
                 raise TypeError(
-                    "The 'classification' parameter must be a boolean"
+                    "The 'classification' argument must be a boolean"
                 ) from e
 
         # ------------------------------
@@ -66,7 +66,7 @@ class DataCard(Card):
         try:
             keep_inverses = bool(kwargs.get("inverses", False))
         except Exception as e:
-            raise TypeError("The 'inverses' parameter must be a boolean") from e
+            raise TypeError("The 'inverses' argument must be a boolean") from e
 
         # Ensure that base Card is keeping inverses of original input
         kwargs["inverses"] = True
@@ -185,7 +185,7 @@ class DataCard(Card):
 
             except Exception as e:
                 raise ValueError(
-                    "This Card could not be saved to the 'filepath' parameter"
+                    "This Card could not be saved to the 'filepath' argument"
                 ) from e
 
         return res
@@ -214,7 +214,7 @@ class DataCard(Card):
         else:
             if len(cnames) != len(X_classes):
                 raise ValueError(
-                    "The 'cnames' parameter must be an array-like"
+                    "The 'cnames' argument must be an array-like"
                     + " of class names in the (n_classes, ) shape,"
                     + " where n_classes matches the provided Card"
                 )
@@ -345,14 +345,14 @@ class DataCard(Card):
 
             if cnames is None:
                 # Without y, with default class name
-                cnames = [f"{self.CONFIG_C_NAME_DEFAULT} 0"]
+                cnames = [f"{self.CONFIG_C_NAME_DEFAULT}0"]
 
             else:
                 # Without y, with provided one-class name
                 if len(cnames) != 1:
                     raise ValueError(
-                        "When the 'y' parameter is not provided,"
-                        + " the 'cnames' parameter must be an array-like"
+                        "When the 'y' argument is not provided,"
+                        + " the 'cnames' argument must be an array-like"
                         + " containing just one class name"
                     )
 
@@ -370,13 +370,13 @@ class DataCard(Card):
                 y = np.array(y, copy=None, ndmin=1)
             except Exception as e:
                 raise TypeError(
-                    "The 'y' parameter must be a 1D array-like in the (n_rows, ) shape"
+                    "The 'y' argument must be a 1D array-like in the (n_rows, ) shape"
                 ) from e
 
             if len(y.shape) != 1 or y.shape[0] != self.info[self.KEY_I_COUNT_X]:
                 raise TypeError(
-                    "The 'y' parameter must be a 1D array-like in the (n_rows, ) shape,"
-                    + " where n_rows matches the 'X' parameter"
+                    "The 'y' argument must be a 1D array-like in the (n_rows, ) shape,"
+                    + " where n_rows matches the 'X' argument"
                 )
 
             if is_classification:
@@ -387,7 +387,7 @@ class DataCard(Card):
                     )
                 except Exception as e:
                     raise TypeError(
-                        "The 'y' parameter must be a 1D array-like in the (n_rows, ) shape"
+                        "The 'y' argument must be a 1D array-like in the (n_rows, ) shape"
                     ) from e
 
                 y = y.astype(int)
@@ -398,16 +398,16 @@ class DataCard(Card):
                         cnames = [str(yname.item()) for yname in ynames]
                     except Exception as e:
                         raise TypeError(
-                            "The 'y' parameter must be a 1D array-like with adequate class labels"
+                            "The 'y' argument must be a 1D array-like with adequate class labels"
                         ) from e
 
                 else:
                     # With y, using provided class names
                     if len(cnames) != len(ynames):
                         raise ValueError(
-                            "The 'cnames' parameter must be an array-like"
+                            "The 'cnames' argument must be an array-like"
                             + " of class names in the (n_classes, ) shape,"
-                            + " where n_classes matches the 'y' parameter"
+                            + " where n_classes matches the 'y' argument"
                         )
 
                 self.classes = {
@@ -439,12 +439,12 @@ class DataCard(Card):
 
                 except Exception as e:
                     raise TypeError(
-                        "The 'y' parameter must contain continuous values when the 'continuous' parameter is used"
+                        "The 'y' argument must contain continuous values when the 'classification' argument is False"
                     ) from e
 
                 self.classes = {
                     k: {
-                        self.KEY_C_NAME: f"{self.CONFIG_C_NAME_DEFAULT} {str(k)}"[
+                        self.KEY_C_NAME: f"{self.CONFIG_C_NAME_DEFAULT}{str(k)}"[
                             : self.CONFIG_C_NAME_LENGTH
                         ]
                         + f" [{str(kdict[self.KEY_P_BIN_MIN])}, {str(kdict[self.KEY_P_BIN_MAX])}]",
@@ -539,17 +539,17 @@ class DataCard(Card):
                 classes = [int(item) for item in classes]
             except Exception as e:
                 raise TypeError(
-                    "The 'classes' parameter must be an array-like of class indexes"
+                    "The 'classes' argument must be an array-like of class indexes"
                 ) from e
 
             if len(classes) == 0:
-                raise ValueError("The 'classes' parameter must not be empty") from e
+                raise ValueError("The 'classes' argument must not be empty")
 
             for k in classes:
                 if k not in self.classes:
                     raise ValueError(
-                        "The 'classes' parameter contains invalid class indexes"
-                    ) from e
+                        "The 'classes' argument contains invalid class indexes"
+                    )
 
         if features is None:
             features = [j for j in range(len(self.features))]
@@ -567,17 +567,17 @@ class DataCard(Card):
                 features = [int(item) for item in features]
             except Exception as e:
                 raise TypeError(
-                    "The 'features' parameter must be an array-like of feature indexes"
+                    "The 'features' argument must be an array-like of feature indexes"
                 ) from e
 
             if len(features) == 0:
-                raise ValueError("The 'features' parameter must not be empty") from e
+                raise ValueError("The 'features' argument must not be empty")
 
             for j in features:
                 if j not in self.features:
                     raise ValueError(
-                        "The 'features' parameter contains invalid feature indexes"
-                    ) from e
+                        "The 'features' argument contains invalid feature indexes"
+                    )
 
             miniregions = {k: {} for k in classes}
 
@@ -614,35 +614,26 @@ class DataCard(Card):
                         else:
                             minilines[k][minitup] = val
 
-            try:
-                fig = plotter(
-                    lines=[
-                        [[item / self._scaling for item in tup] for tup in krdict]
-                        for krdict in minilines.values()
-                    ],
-                    alphas=[
-                        [item * alpha_scaling + 0.2 for item in krdict.values()]
-                        for krdict in minilines.values()
-                    ],
-                    # alphas=[
-                    #     [
-                    #         (item * 0.8 / self.classes[k][self.KEY_C_COUNT_X]) + 0.2
-                    #         for item in krdict.values()
-                    #     ]
-                    #     for k, krdict in minilines.items()
-                    # ],
-                    vertice_labels=[
-                        self.features[j][self.KEY_F_NAME] for j in features
-                    ],
-                    button_labels=[self.classes[k][self.KEY_C_NAME] for k in classes],
-                    button_colors=None,
-                    tick_labels=self.CONFIG_PLT_TICK_LABELS,
-                    tick_values=self.CONFIG_PLT_TICK_VALUES,
-                    axis_limits=self.CONFIG_PLT_AXIS_LIMITS,
-                    verify=False,
-                )
-            except Exception as e:
-                raise ValueError("The call to the 'plotter' argument failed") from e
+            fig = plotter(
+                lines=[
+                    [[item / self._scaling for item in tup] for tup in krdict]
+                    for krdict in minilines.values()
+                ],
+                alphas=[
+                    [item * alpha_scaling + 0.2 for item in krdict.values()]
+                    for krdict in minilines.values()
+                ],
+                # alphas=[
+                #     [
+                #         (item * 0.8 / self.classes[k][self.KEY_C_COUNT_X]) + 0.2
+                #         for item in krdict.values()
+                #     ]
+                #     for k, krdict in minilines.items()
+                # ],
+                vertice_labels=[self.features[j][self.KEY_F_NAME] for j in features],
+                button_labels=[self.classes[k][self.KEY_C_NAME] for k in classes],
+                verify=False,
+            )
 
             return miniregions, fig
 
