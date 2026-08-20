@@ -1,14 +1,16 @@
 """spata.base.card"""
 
 import time
+import math
 import json
+import itertools
 import numpy as np
 
 
 class Card:
     """Card"""
 
-    CONFIG_I_GRANULARITY_DEFAULT = 2
+    CONFIG_I_GRANULARITY_DEFAULT = 3
 
     CONFIG_I_NAME_DEFAULT = "Card"
     CONFIG_I_NAME_LENGTH = 100
@@ -35,8 +37,8 @@ class Card:
     KEY_F_MIN_P = "min_projection"
     KEY_F_MAX_P = "max_projection"
 
-    KEY_P_BIN_MIN = "bin"
-    KEY_P_BIN_MAX = "bin"
+    KEY_P_BIN_MIN = "bin_min"
+    KEY_P_BIN_MAX = "bin_max"
     KEY_P_COUNT_X = "n_inverses"
     KEY_P_COUNT_R = "n_regions"
 
@@ -104,9 +106,9 @@ class Card:
         name=None,
         fnames=None,
         fdtypes=None,
-        inverses=None,
         random_state=None,
         n_jobs=None,
+        base=None,
     ):
         self.info = {self.KEY_I_TIMESTAMP: int(time.time())}
 
@@ -150,14 +152,14 @@ class Card:
                     + "  in the (n_features, ) shape, where n_features matches the 'fnames' argument"
                 )
 
-        if inverses is None:
+        if base is None:
             keep_inverses = False
 
         else:
             try:
-                keep_inverses = bool(inverses)
+                keep_inverses = bool(base)
             except Exception as e:
-                raise TypeError("The 'inverses' argument must be a boolean") from e
+                raise TypeError("The 'base' argument must be a boolean") from e
 
         try:
             self.random_state = np.random.default_rng(random_state)
@@ -271,6 +273,7 @@ class Card:
 
     def save(self, filepath=None):
         res = {
+            "type": "card",
             "hexdigest": {"card": self.__hexdigest()},
             "info": {
                 self.KEY_I_TIMESTAMP: self.info[self.KEY_I_TIMESTAMP],
@@ -380,7 +383,7 @@ class Card:
         if out_by_feature or out_by_tuple:
             res = []
         else:
-            res = np.empty((nrows, ncols), dtype=self.info[self.KEY_I_SAFE_DTYPE])
+            res = np.empty(shape=(nrows, ncols), dtype=self.info[self.KEY_I_SAFE_DTYPE])
 
         for j in range(ncols):
             if Xbycols[j].dtype != self.features[j][self.KEY_F_DTYPE]:
@@ -418,6 +421,78 @@ class Card:
 
         return res
 
+    def generate(self, regions, quantity=1):
+        res = []
+
+        if quantity == 1:
+            for r in regions:
+                ritem = []
+
+                for j, p in enumerate(r):
+                    if self.features[j][self.KEY_F_TYPE] == self.VAL_F_TYPE_CONTINUOUS:
+                        ritem.append(
+                            (
+                                self.projections[j][p][self.KEY_P_BIN_MAX]
+                                + self.projections[j][p][self.KEY_P_BIN_MIN]
+                            )
+                            / 2
+                        )
+
+                    else:
+                        ritem.append(
+                            round(
+                                (
+                                    self.projections[j][p][self.KEY_P_BIN_MAX]
+                                    + self.projections[j][p][self.KEY_P_BIN_MIN]
+                                )
+                                / 2
+                            )
+                        )
+
+                res.append(ritem)
+
+        else:
+            usedp = {j: {} for j in self.features}
+            splits = quantity + 1
+
+            for r in regions:
+                rarray = np.empty(shape=(quantity, len(r)), dtype=float)
+
+                for j, p in enumerate(r):
+                    if p in usedp[j]:
+                        rarray[:, j] = usedp[j][p]
+
+                    else:
+                        step = (
+                            self.projections[j][p][self.KEY_P_BIN_MAX]
+                            - self.projections[j][p][self.KEY_P_BIN_MIN]
+                        ) / (splits)
+
+                        prevp = self.projections[j][p][self.KEY_P_BIN_MIN]
+                        rarray[:, j] = [prevp + step for _ in range(quantity)]
+
+                        if (
+                            self.features[j][self.KEY_F_TYPE]
+                            == self.VAL_F_TYPE_CONTINUOUS
+                        ):
+                            rarray[:, j].round()
+
+                        usedp[j][p] = rarray[:, j]
+
+                res.extend(rarray.tolist())
+
+        return res
+
+    def permutate(self):
+        temp = self.info[self.KEY_I_GRANULARITY] - 1
+
+        pkeys = [
+            [p for p in jpdict if math.floor(math.log10(p)) == temp]
+            for jpdict in self.projections.values()
+        ]
+
+        return list(itertools.product(*pkeys))
+
     def __prepare_info(self, granularity, name, prevgranularity=None, prevname=None):
         if name is None:
             if prevname is None:
@@ -426,8 +501,6 @@ class Card:
                 name = prevname
 
         self.info[self.KEY_I_NAME] = name[: self.CONFIG_I_NAME_LENGTH]
-
-        # self.info[self.KEY_I_TYPE] = self.__class__.__name__
 
         if granularity is None:
             if prevgranularity is None:
@@ -512,7 +585,7 @@ class Card:
                     raise TypeError(
                         "The array-like provided in 'X' cannot be accessed by slicing"
                         + ". Please provide a 2D array-like in the (n_rows, n_columns) shape"
-                        + ". Alternatively, you can replace 'X' with a function to access columns"
+                        + ". Alternatively, you can replace 'X' with a callable function to access columns"
                         + " like 'X[:,0], X[:,1], ..., X[:,n_columns]' or 'X(0), X(1), ..., X(n_columns)'"
                     )
 
@@ -537,7 +610,7 @@ class Card:
                 raise TypeError(
                     "The array-like provided in 'X' cannot be accessed by slicing"
                     + ". Please provide a 2D array-like in the (n_rows, n_columns) shape"
-                    + ". Alternatively, you can replace 'X' with a function to access columns"
+                    + ". Alternatively, you can replace 'X' with a callable function to access columns"
                     + " like 'X[:,0], X[:,1], ..., X[:,n_columns]' or 'X(0), X(1), ..., X(n_columns)'"
                 )
 
@@ -713,9 +786,6 @@ class Card:
 
             self.info[self.KEY_I_COUNT_R] = X_info[self.KEY_I_COUNT_R]
 
-            # if X_inverses is not None:
-            #     self.inverses = [r for r in X_inverses]
-
         else:
             self.projections = {
                 j: {
@@ -769,11 +839,6 @@ class Card:
         # ------------------------------
 
         self.info[self.KEY_I_COUNT_X] = X_info[self.KEY_I_COUNT_X]
-
-        # if X_inverses is not None:
-        #     self.inverses = [
-        #         tuple(int(p / scaling) for p in r) for r in X_inverses
-        #     ]
 
     def __init_from_input(self, X, granularity, name, fnames, fdtypes, keep_inverses):
 
@@ -916,7 +981,7 @@ class Card:
         self.regions = {}
 
         if keep_inverses:
-            self.inverses = []
+            self.base = []
 
         Xiter = np.nditer(tuple(Xbycols))
 
@@ -924,7 +989,7 @@ class Card:
             tup = tuple(p.item() for p in tup)
 
             if keep_inverses:
-                self.inverses.append(tup)
+                self.base.append(tup)
 
             if tup in self.regions:
                 self.regions[tup][self.KEY_R_COUNT_X] += 1
@@ -942,7 +1007,7 @@ class Card:
         # ------------------------------
 
         self.info[self.KEY_I_COUNT_X] = (
-            len(self.inverses)
+            len(self.base)
             if keep_inverses
             else sum(
                 [len(rdict[self.KEY_R_COUNT_X]) for rdict in self.regions.values()]
@@ -1464,7 +1529,7 @@ class Card:
 
         return new_farray
 
-    def summary(self, features=None, plotter=None):
+    def summary(self, plotter=None, features=None):
 
         if plotter is not None:
             from spata.base.plotter import Plotter

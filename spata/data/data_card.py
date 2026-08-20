@@ -64,20 +64,17 @@ class DataCard(Card):
         # ------------------------------
 
         try:
-            keep_inverses = bool(kwargs.get("inverses", False))
+            keep_base = bool(kwargs.get("base", False))
         except Exception as e:
-            raise TypeError("The 'inverses' argument must be a boolean") from e
+            raise TypeError("The 'base' argument must be a boolean") from e
 
         # Ensure that base Card is keeping inverses of original input
-        kwargs["inverses"] = True
+        kwargs["base"] = True
         super().__init__(X, **kwargs)
 
         # ------------------------------
 
-        if self.info[self.KEY_I_INIT] == self.VAL_I_INIT_BYCLONE:
-            if not isinstance(X, DataCard):
-                raise TypeError("Provided Card is not a DataCard")
-
+        if isinstance(X, DataCard):
             self.__init_from_dict(
                 X.info,
                 X.classes,
@@ -86,23 +83,8 @@ class DataCard(Card):
                 cnames,
             )
 
-        elif self.info[self.KEY_I_INIT] == self.VAL_I_INIT_BYDICT:
-            # if "classes" not in X:
-            #     raise ValueError(
-            #         "Card cannot be loaded from dict because it has an incompatible format"
-            #     )
-
+        elif isinstance(X, dict) and "type" in X and X["type"] == "datacard":
             X["classes"] = {int(k): kdict for k, kdict in X["classes"].items()}
-
-            # if "class_regions" in X:
-            #     self.__init_from_dict(
-            #         X["info"],
-            #         X["classes"],
-            #         X["class_regions"],
-            #         True,
-            #         cnames,
-            #     )
-            # else:
 
             self.__init_from_dict(
                 X["info"],
@@ -112,18 +94,18 @@ class DataCard(Card):
                 cnames,
             )
 
-        elif self.info[self.KEY_I_INIT] == self.VAL_I_INIT_BYX:
-
-            self.__init_from_input(y, cnames, is_classification)
-
         else:
-            raise TypeError("Provided Card is not supported")
+            if isinstance(X, dict) and "type" in X and X["type"] != "card":
+                raise TypeError(
+                    "The dictionary provided in the 'X' argument must be a base Card object"
+                )
+            self.__init_from_input(y, cnames, is_classification)
 
         # ------------------------------
 
         # Ensure compliance with DataCard argument for keeping inverses
-        if not keep_inverses and hasattr(self, "inverses"):
-            delattr(self, "inverses")
+        if not keep_base and hasattr(self, "base"):
+            delattr(self, "base")
 
     def __hexdigest(self):
         if not hasattr(self, "__hxdgst"):
@@ -144,51 +126,6 @@ class DataCard(Card):
             self.__hxdgst = a.hexdigest()
 
         return self.__hxdgst
-
-    def save(self, filepath=None):
-        res = super().save(filepath=None)
-
-        res["hexdigest"]["data_card"] = self.__hexdigest()
-
-        res["info"][self.KEY_I_COUNT_C] = self.info[self.KEY_I_COUNT_C]
-
-        res["classes"] = {
-            k: {
-                self.KEY_C_INIT: kdict[self.KEY_C_INIT],
-                self.KEY_C_NAME: kdict[self.KEY_C_NAME],
-                self.KEY_C_COUNT_X: kdict[self.KEY_C_COUNT_X],
-                self.KEY_C_COUNT_R: kdict[self.KEY_C_COUNT_R],
-                self.KEY_C_MIN_R: str(kdict[self.KEY_C_MIN_R]),
-                self.KEY_C_MAX_R: str(kdict[self.KEY_C_MAX_R]),
-            }
-            for k, kdict in self.classes.items()
-        }
-
-        for k, krdict in self.class_regions.items():
-            for r, rdict in krdict.items():
-                r = str(r)
-
-                if self.KEY_R_COUNT_CR_X in res["regions"][r]:
-                    res["regions"][r][self.KEY_R_COUNT_CR_X][k] = {
-                        self.KEY_CR_COUNT_X: rdict[self.KEY_CR_COUNT_X]
-                    }
-
-                else:
-                    res["regions"][r][self.KEY_R_COUNT_CR_X] = {
-                        k: {self.KEY_CR_COUNT_X: rdict[self.KEY_CR_COUNT_X]}
-                    }
-
-        if filepath is not None:
-            try:
-                with open(filepath, "w", encoding="utf-8") as f:
-                    json.dump(res, f, sort_keys=True)
-
-            except Exception as e:
-                raise ValueError(
-                    "This Card could not be saved to the 'filepath' argument"
-                ) from e
-
-        return res
 
     def __init_from_dict(
         self,
@@ -336,9 +273,13 @@ class DataCard(Card):
                     )
                     kdict[self.KEY_C_COUNT_R] = len(self.class_regions[k])
 
-    def __init_from_input(self, y, cnames, is_classification):
+    def __init_from_input(
+        self,
+        y,
+        cnames,
+        is_classification,
+    ):
 
-        ## Setup y and 'classes' dictionary
         if y is None:
             # Without y
             y = np.zeros(self.info[self.KEY_I_COUNT_X], dtype=int)
@@ -464,7 +405,7 @@ class DataCard(Card):
             kdict[self.KEY_C_MIN_R] = self._max_region
             kdict[self.KEY_C_MAX_R] = self._min_region
 
-        for i, r in enumerate(self.inverses):
+        for i, r in enumerate(self.base):
             k = y[i]
 
             if r in self.class_regions[k]:
@@ -479,7 +420,7 @@ class DataCard(Card):
                 elif r > self.classes[k][self.KEY_C_MAX_R]:
                     self.classes[k][self.KEY_C_MAX_R] = r
 
-        # for i, r in enumerate(self.inverses):
+        # for i, r in enumerate(self.base):
         #     k = y[i]
 
         #     if r in self.class_regions[k]:
@@ -516,7 +457,53 @@ class DataCard(Card):
 
             # self.classes[k][self.KEY_C_FREQ_R] = freq_r
 
-    def summary(self, features=None, classes=None, plotter=None):
+    def save(self, filepath=None):
+        res = super().save(filepath=None)
+
+        res["type"] = "datacard"
+        res["hexdigest"]["datacard"] = self.__hexdigest()
+
+        res["info"][self.KEY_I_COUNT_C] = self.info[self.KEY_I_COUNT_C]
+
+        res["classes"] = {
+            k: {
+                self.KEY_C_INIT: kdict[self.KEY_C_INIT],
+                self.KEY_C_NAME: kdict[self.KEY_C_NAME],
+                self.KEY_C_COUNT_X: kdict[self.KEY_C_COUNT_X],
+                self.KEY_C_COUNT_R: kdict[self.KEY_C_COUNT_R],
+                self.KEY_C_MIN_R: str(kdict[self.KEY_C_MIN_R]),
+                self.KEY_C_MAX_R: str(kdict[self.KEY_C_MAX_R]),
+            }
+            for k, kdict in self.classes.items()
+        }
+
+        for k, krdict in self.class_regions.items():
+            for r, rdict in krdict.items():
+                r = str(r)
+
+                if self.KEY_R_COUNT_CR_X in res["regions"][r]:
+                    res["regions"][r][self.KEY_R_COUNT_CR_X][k] = {
+                        self.KEY_CR_COUNT_X: rdict[self.KEY_CR_COUNT_X]
+                    }
+
+                else:
+                    res["regions"][r][self.KEY_R_COUNT_CR_X] = {
+                        k: {self.KEY_CR_COUNT_X: rdict[self.KEY_CR_COUNT_X]}
+                    }
+
+        if filepath is not None:
+            try:
+                with open(filepath, "w", encoding="utf-8") as f:
+                    json.dump(res, f, sort_keys=True)
+
+            except Exception as e:
+                raise ValueError(
+                    "This Card could not be saved to the 'filepath' argument"
+                ) from e
+
+        return res
+
+    def summary(self, plotter=None, features=None, classes=None):
 
         if plotter is not None:
             from spata.base.plotter import Plotter
